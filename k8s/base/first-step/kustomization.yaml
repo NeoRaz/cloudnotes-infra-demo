@@ -1,0 +1,26 @@
+resources:
+  - 00-minio-pvc.yaml
+  - 00-minio-deployment.yaml
+  - 00-minio-service.yaml
+  - 00-minio-setup-job.yaml
+  - 01-mysql-pvc.yaml
+  - 01-mysql-deployment.yaml
+  - 01-mysql-service.yaml
+
+  - 02-postgres-pvc.yaml
+  - 02-postgres-deployment.yaml
+  - 02-postgres-service.yaml
+  - 02-postgres-configmap.yaml
+
+  - 03-redis-deployment.yaml
+  - 03-redis-service.yaml
+
+  - 04-server-deployment.yaml
+  - 04-server-service.yaml
+
+  - 05-server-nginx-deployment.yaml
+  - 05-server-nginx-service.yaml
+  - 05-server-nginx-configmap.yaml
+
+  - 06-ai-deployment.yaml
+  - 06-ai-service.yaml

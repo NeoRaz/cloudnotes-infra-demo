@@ -1,0 +1,13 @@
+resources:
+  - ../../../base/second-step
+
+namespace: cloudnotes-prod
+
+images:
+  - name: cloudnotes-client
+  - name: cloudnotes-server
+    
+patches:
+  - path: patch-ingress-host.yaml
+  - path: patch-image-pull-secret.yaml
+  - path: patch-single-node-resources.yaml

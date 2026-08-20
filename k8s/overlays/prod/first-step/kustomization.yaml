@@ -1,0 +1,13 @@
+resources:
+  - pvc.yaml
+  - ../../../base/first-step
+
+namespace: cloudnotes-prod
+
+images:
+  - name: cloudnotes-server
+    
+patches:
+  - path: patch-image-pull-secret.yaml
+  - path: patch-single-node-resources.yaml
+

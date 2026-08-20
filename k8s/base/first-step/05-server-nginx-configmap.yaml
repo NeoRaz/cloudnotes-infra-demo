@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: server-nginx-conf
+data:
+  default.conf: |
+    server {
+      listen 80;
+      client_max_body_size 100M;
+      index index.php index.html;
+      root /var/www/html/public;
+      location / {
+        try_files $uri $uri/ /index.php?$query_string;
+      }
+      location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass server:9000;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_index index.php;
+        fastcgi_read_timeout 600;
+      }
+      location ~ /\.ht {
+        deny all;
+      }
+    }

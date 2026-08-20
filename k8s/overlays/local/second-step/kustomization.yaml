@@ -1,0 +1,17 @@
+resources:
+- ../../../base/second-step
+namespace: cloudnotes-local
+images:
+- name: cloudnotes-ai
+  newName: cloudnotes-ai
+  newTag: local-1787199618
+- name: cloudnotes-client
+  newName: cloudnotes-client
+  newTag: local-1787198403
+- name: cloudnotes-server
+  newName: cloudnotes-server
+  newTag: local-1787199618
+patches:
+- path: patch-ingress-host.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization

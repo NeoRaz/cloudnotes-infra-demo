@@ -1,0 +1,164 @@
+name: CloudNotes Infra CD (Deploy)
+
+on:
+  repository_dispatch:
+    types: [app-deploy]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy'
+        required: true
+        default: 'latest'
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    env:
+      ENVIRONMENT: prod
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DOCKER_EMAIL: ${{ secrets.DOCKER_EMAIL }}
+      KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+      SKIP_BUILD: true
+
+    steps:
+      - name: 🧩 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: 🔐 Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${KUBE_CONFIG_DATA}" | base64 --decode > $HOME/.kube/config
+
+      - name: 🧩 Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: 🏷️ Determine Image Tag
+        id: tags
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            TAG="${{ github.event.client_payload.image_tag }}"
+          else
+            TAG="${{ github.event.inputs.image_tag }}"
+          fi
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+          echo "🚀 Deploying tag: $TAG"
+
+      - name: 🧩 Generate Production Env File
+        run: |
+          mkdir -p ./deployment/envs
+          cat <<EOF > ./deployment/envs/prod.env
+          NAMESPACE=cloudnotes-prod
+
+          # Laravel App Config
+          APP_KEY=${{ secrets.APP_KEY }}
+          APP_ENV=prod
+          APP_DEBUG=false
+          APP_URL=${{ secrets.APP_URL }}
+          APP_TIMEZONE=UTC
+          APP_LOCALE=en
+          APP_FALLBACK_LOCALE=en
+          APP_FAKER_LOCALE=en_US
+
+          # Primary SQL Database
+          DB_DATABASE=${{ secrets.DB_DATABASE }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_CONNECTION=mysql
+          DB_PORT=3306
+
+          # Vector DB (Postgres)
+          PG_DB_CONNECTION=pgsql
+          PG_HOST=${{ secrets.PG_HOST }}
+          PG_PORT=5432
+          PG_DATABASE=${{ secrets.PG_DATABASE }}
+          PG_USERNAME=${{ secrets.PG_USERNAME }}
+          PG_PASSWORD=${{ secrets.PG_PASSWORD }}
+
+          # AI & LLM Service
+          ENABLE_AI=${{ secrets.ENABLE_AI }}
+          AI_SERVICE_URL=${{ secrets.AI_SERVICE_URL }}
+          AI_MODEL_PROVIDER=${{ secrets.AI_MODEL_PROVIDER }}
+          AI_ENDPOINT_URL=${{ secrets.AI_ENDPOINT_URL }}
+          AI_API_KEY=${{ secrets.AI_API_KEY }}
+          AI_LLM_MODEL=${{ secrets.AI_LLM_MODEL }}
+          AI_EMBEDDING_MODEL=${{ secrets.AI_EMBEDDING_MODEL }}
+          AI_EMBEDDING_DIM=${{ secrets.AI_EMBEDDING_DIM }}
+          HUGGINGFACE_TOKENIZER=${{ secrets.HUGGINGFACE_TOKENIZER }}
+
+          # Cache (Redis)
+          REDIS_HOST=${{ secrets.REDIS_HOST }}
+          REDIS_CLIENT=phpredis
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+          REDIS_PORT=6379
+
+          # Brevo Mail SMTP
+          MAIL_MAILER=smtp
+          MAIL_HOST=${{ secrets.MAIL_HOST }}
+          MAIL_PORT=${{ secrets.MAIL_PORT }}
+          MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+          MAIL_ENCRYPTION=${{ secrets.MAIL_ENCRYPTION }}
+          MAIL_FROM_ADDRESS=${{ secrets.MAIL_FROM_ADDRESS }}
+          MAIL_FROM_NAME="CloudNotes"
+          BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
+
+          # File Systems & S3 Storage
+          CACHE_STORE=database
+          CACHE_PREFIX=
+          QUEUE_CONNECTION=redis
+          SESSION_DRIVER=database
+          FILESYSTEM_DISK=s3
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}
+          AWS_BUCKET=${{ secrets.AWS_BUCKET }}
+          AWS_ENDPOINT=${{ secrets.AWS_ENDPOINT }}
+          AWS_USE_PATH_STYLE_ENDPOINT=${{ secrets.AWS_USE_PATH_STYLE_ENDPOINT }}
+          AWS_URL=${{ secrets.AWS_URL }}
+
+          # Sessions
+          SESSION_LIFETIME=120
+          SESSION_ENCRYPT=false
+          SESSION_PATH=/
+          SESSION_DOMAIN=null
+
+          # Vite/React Application Client Config
+          REACT_APP_ENABLE_AI=${{ secrets.REACT_APP_ENABLE_AI }}
+          REACT_APP_NODE_ENV=production
+          REACT_APP_API_BASE_URL=${{ secrets.REACT_APP_API_BASE_URL }}
+          REACT_APP_CLIENT_ID=${{ secrets.REACT_APP_CLIENT_ID }}
+          REACT_APP_CLIENT_SECRET=${{ secrets.REACT_APP_CLIENT_SECRET }}
+          REACT_APP_SECRET_KEY=Cloud-Notes-Client
+
+          # Passport Encryption Config
+          PASSPORT_PRIVATE_KEY="${{ secrets.PASSPORT_PRIVATE_KEY }}"
+          PASSPORT_PUBLIC_KEY="${{ secrets.PASSPORT_PUBLIC_KEY }}"
+
+          # Logging Channels
+          LOG_CHANNEL=stderr
+          EOF
+
+      - name: 🚀 Run Backend Deploy (First Step)
+        run: |
+          chmod +x ./deployment/scripts/deploy-first-step.sh
+          chmod +x ./deployment/scripts/00-reset.sh
+          chmod +x ./deployment/scripts/01-setup-minikube.sh
+          chmod +x ./deployment/scripts/02-build-server.sh
+          ./deployment/scripts/deploy-first-step.sh $ENVIRONMENT
+
+      - name: 💻 Run Frontend Deploy & Passport Credentials (Second Step)
+        run: |
+          chmod +x ./deployment/scripts/deploy-second-step.sh
+          chmod +x ./deployment/scripts/03-passport-generation.sh
+          chmod +x ./deployment/scripts/04-build-client.sh
+          chmod +x ./deployment/scripts/05-deploy-final.sh
+          ./deployment/scripts/deploy-second-step.sh $ENVIRONMENT

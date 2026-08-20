@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-setup
+spec:
+  template:
+    spec:
+      containers:
+        - name: minio-mc
+          image: minio/mc
+          command: ["sh", "-c"]
+          args:
+            - |
+              until mc alias set myminio http://minio:9000 minioadmin minioadmin; do echo 'Waiting for minio...'; sleep 5; done;
+              mc mb myminio/cloudnotes || true;
+              mc anonymous set download myminio/cloudnotes;
+      restartPolicy: OnFailure

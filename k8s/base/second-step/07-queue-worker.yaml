@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: queue-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: queue-worker }
+  template:
+    metadata: { labels: { app: queue-worker } }
+    spec:
+      containers:
+        - name: queue
+          image: cloudnotes-server
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c"]
+          args:
+            - php artisan queue:work --sleep=3 --tries=3 --verbose
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          envFrom:
+            - secretRef: { name: cloudnotes-env }

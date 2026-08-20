@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+spec:
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      containers:
+        - name: php-fpm
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "300m"
+              memory: "768Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-nginx
+spec:
+  template:
+    spec:
+      containers:
+        - name: nginx
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "48Mi"
+            limits:
+              cpu: "150m"
+              memory: "96Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai
+spec:
+  template:
+    spec:
+      containers:
+        - name: ai
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
