@@ -9,7 +9,7 @@ The application source code lives in the application repository: **[cloudnotes-a
 ## Repository Structure
 
 ```text
-cloudnotes-infra/
+cloudnotes-infra-demo/
 ├── k8s/                # Kubernetes manifests and Kustomize overlays
 │   ├── base/           # Base deployments, services, configmaps
 │   └── overlays/       # Environment specific overlays (local, prod)
