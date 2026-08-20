@@ -2,7 +2,7 @@
 
 This repository contains the infrastructure configuration, local deployment scripts, Kubernetes manifests (Kustomize overlays), and environment presets for **CloudNotes**.
 
-The application source code lives in the application repository: **[cloudnotes-app](https://github.com/NeoRaz/CloudNotes)**. This repo keeps a Git Submodule for release pinning and production-style revision control, but local development can point directly at a sibling `cloudnotes-app` checkout.
+The application source code lives in the application repository: **[cloudnotes-app-demo](https://github.com/NeoRaz/cloudnotes-app-demo)**. This repo keeps a Git Submodule for release pinning and production-style revision control, but local development can point directly at a sibling `cloudnotes-app-demo` checkout.
 
 ---
 
@@ -26,7 +26,7 @@ cloudnotes-infra/
 To run the entire multi-pod application stack locally inside a Kubernetes cluster (Minikube):
 
 ### 1. Prepare the App Checkout
-For local development, keep `cloudnotes-app` checked out as a sibling directory next to `cloudnotes-infra`. The local environment preset points at that checkout through `APP_REPO_ROOT`.
+For local development, keep `cloudnotes-app-demo` checked out as a sibling directory next to `cloudnotes-infra-demo`. The local environment preset points at that checkout through `APP_REPO_ROOT`.
 
 If you also want the infra repo to carry a pinned application revision for deployment comparison or release prep, initialize the submodule as well:
 ```bash
